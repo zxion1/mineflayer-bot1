@@ -4,18 +4,30 @@ const mineflayerViewer = require('prismarine-viewer').mineflayer;
 const PORT = process.env.PORT || 3000;
 
 const bot = mineflayer.createBot({
-  host: process.env.SERVER_IP || 'play.wolfmc.fun',
-  port: 25565,
-  username: 'iwabtjkey',
+  host: process.env.SERVER_IP || 'play.wolfmc.fun', // Replace or set SERVER_IP environment variable
+  port: 19299,
+  username: 'AFK_Controller',
   version: false,
 });
 
 bot.once('spawn', () => {
-  console.log('[+] Bot connected!');
+  console.log('[+] Bot connected to main hub!');
+
+  // Launch web viewer
   mineflayerViewer(bot, { port: PORT, firstPerson: true });
   console.log(`[+] Web viewer active on port ${PORT}`);
+
+  // Automatically register upon spawning
+  bot.chat('/register lollol lollol');
+
+  // Wait 3 seconds, then send command to connect to classicboxpvp
+  setTimeout(() => {
+    bot.chat('/server classicboxpvp');
+    console.log('[+] Sent command to switch server to classicboxpvp');
+  }, 3000);
 });
 
+// Control via chat commands
 bot.on('chat', (username, message) => {
   if (username === bot.username) return;
 
