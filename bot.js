@@ -1,45 +1,72 @@
 const mineflayer = require('mineflayer');
-const mineflayerViewer = require('prismarine-viewer').mineflayer;
+const inventoryViewer = require('mineflayer-web-inventory');
 
-const PORT = process.env.PORT || 3000;
+// Server Configuration
+const SERVER_HOST = 'play.wolfmc.fun';
+const SERVER_PORT = 19299;
 
-const bot = mineflayer.createBot({
-  host: process.env.SERVER_IP || 'play.wolfmc.fun', // Replace or set SERVER_IP environment variable
-  port: 19299,
-  username: 'AFK_Controller',
-  version: false,
-});
+// List of 4 unique bot usernames
+const BOT_NAMES = [
+  'AFK_Controller_1',
+  'AFK_Controller_2',
+  'AFK_Controller_3',
+  'AFK_Controller_4'
+];
 
-bot.once('spawn', () => {
-  console.log('[+] Bot connected to main hub!');
+function createBotInstance(username, index) {
+  const bot = mineflayer.createBot({
+    host: SERVER_HOST,
+    port: SERVER_PORT,
+    username: username,
+    version: false,
+  });
 
-  // Launch web viewer
-  mineflayerViewer(bot, { port: PORT, firstPerson: true });
-  console.log(`[+] Web viewer active on port ${PORT}`);
+  // Attach web inventory viewer to the first bot
+  if (index === 0) {
+    const webPort = process.env.PORT || 3000;
+    inventoryViewer(bot, { port: webPort });
+    console.log(`[+] Web dashboard active on port ${webPort} for ${username}`);
+  }
 
-  // Automatically register upon spawning
-  bot.chat('/register lollol lollol');
+  bot.once('spawn', () => {
+    console.log(`[+] Bot ${username} connected!`);
 
-  // Wait 3 seconds, then send command to connect to classicboxpvp
+    // 1. Send registration command
+    bot.chat('/register botbot botbot');
+
+    // 2. Switch server after 3 seconds
+    setTimeout(() => {
+      bot.chat('/server classicboxpvp');
+      console.log(`[+] ${username} sent: /server classicboxpvp`);
+
+      // 3. Send AFK command after server transfer
+      setTimeout(() => {
+        bot.chat('/afk');
+        console.log(`[+] ${username} sent: /afk`);
+      }, 3000);
+    }, 3000);
+  });
+
+  // In-game chat controls
+  bot.on('chat', (sender, message) => {
+    if (BOT_NAMES.includes(sender)) return;
+
+    if (message === '!jump') {
+      bot.setControlState('jump', true);
+      setTimeout(() => bot.setControlState('jump', false), 350);
+    }
+    if (message === '!sneak') {
+      bot.setControlState('sneak', !bot.getControlState('sneak'));
+    }
+  });
+
+  bot.on('error', (err) => console.log(`[!] Error [${username}]:`, err));
+  bot.on('end', () => console.log(`[-] Bot ${username} disconnected.`));
+}
+
+// Connect bots sequentially with a 4-second delay to avoid connection limits
+BOT_NAMES.forEach((name, index) => {
   setTimeout(() => {
-    bot.chat('/server classicboxpvp');
-    console.log('[+] Sent command to switch server to classicboxpvp');
-  }, 3000);
-});
-
-// Control via chat commands
-bot.on('chat', (username, message) => {
-  if (username === bot.username) return;
-
-  if (message === '!forward') {
-    bot.setControlState('forward', true);
-    setTimeout(() => bot.setControlState('forward', false), 1000);
-  }
-  if (message === '!jump') {
-    bot.setControlState('jump', true);
-    setTimeout(() => bot.setControlState('jump', false), 350);
-  }
-  if (message === '!sneak') {
-    bot.setControlState('sneak', !bot.getControlState('sneak'));
-  }
+    createBotInstance(name, index);
+  }, index * 4000);
 });
