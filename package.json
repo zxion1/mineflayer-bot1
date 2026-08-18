@@ -7,6 +7,7 @@
     "start": "node bot.js"
   },
   "dependencies": {
+    "canvas": "^2.11.2",
     "mineflayer": "^4.20.1",
     "prismarine-viewer": "^1.28.0"
   }
