@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AFK Bot Client</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h2>AFK Bot Controller</h2>
+  
+  <label for="host">Server IP:</label>
+  <input id="host" placeholder="Server IP" value="play.wolfmc.fun"><br><br>
+
+  <label for="port">Port:</label>
+  <input id="port" placeholder="Port" value="19299"><br><br>
+
+  <label for="username">Bot Name:</label>
+  <input id="username" placeholder="Bot Username" value="AFK_Bot"><br><br>
+
+  <button onclick="start()">Connect Bot</button>
+  <button onclick="stop()">Disconnect</button>
+
+  <h3>Status: <span id="status">Offline</span></h3>
+
+  <script>
+    const socket = io();
+
+    function start() {
+      const host = document.getElementById('host').value;
+      const port = parseInt(document.getElementById('port').value, 10);
+      const username = document.getElementById('username').value;
+      
+      socket.emit('startBot', { host, port, username });
+    }
+
+    function stop() {
+      socket.emit('stopBot');
+    }
+
+    socket.on('status', (msg) => {
+      document.getElementById('status').innerText = msg;
+    });
+  </script>
+</body>
+</html>
